@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tablero Monopoly</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="board"></div>
+  <div id="properties" class="properties-container"></div>
+
+  <img src="images/fondo/izquierda6.jpg" class="background-image left">
+  <img src="images/fondo/derecha6.jpg" class="background-image right">
+
+  <button class="play-button" onclick="startGame()">Jugar</button>
+
+  <div class="dice-container">
+    <h2>Dados</h2>
+    <img id="dice" src="images/dado/dados.png" alt="Dice" style="display: none;">
+    <div class="result-container" style="display: none;">
+      <img id="result1" src="" alt="Result 1">
+      <img id="result2" src="" alt="Result 2">
+    </div>
+  </div>
+
+  <div id="welcome-message" class="welcome-message" style="display: none;">
+    <h1>Bienvenido a MonlauPoly</h1>
+    <p>Tienes actualmente en tu banco 1200€</p>
+    <button onclick="closeWelcomeMessage()">Cerrar</button>
+  </div>
+
+  <div id="initial-roll-message" class="initial-roll-message" style="display: none;">
+    <h2>Todos los jugadores deben lanzar los dados. El jugador con la puntuación más alta comenzará el juego.</h2>
+    <button onclick="startInitialRoll()">Lanzar Dados</button>
+  </div>
+
+  <div id="initial-roll-results" class="initial-roll-results" style="display: none;"></div>
+
+  <div id="error-message" class="error-message" style="display: none;"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
