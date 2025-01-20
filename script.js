@@ -162,9 +162,7 @@ function rollDice() {
   const board = document.getElementById('board');
   const resultDiv = document.createElement('div');
   resultDiv.classList.add('dice-result');
-  resultDiv.innerHTML = `
-    <img src="images/resultados/${sum}.png" alt="Resultado ${sum}">
-  `;
+  resultDiv.innerHTML = `<img src="images/resultados/${sum}.png" alt="Resultado ${sum}">`;
   board.appendChild(resultDiv);
 
   setTimeout(() => {
@@ -311,6 +309,8 @@ function startGameWithCharacters(playerNames) {
     characterImg.src = `images/jugadores/${selectedCharacters[index]}`;
     characterImg.alt = `Personaje ${index + 1}`;
     characterImg.classList.add('board-character');
+    characterImg.dataset.player = index;
+    characterImg.dataset.position = 0;
     salidaCell.appendChild(characterImg);
   });
 
@@ -378,8 +378,74 @@ function determineFirstPlayer() {
   const firstPlayerMessage = document.createElement('div');
   firstPlayerMessage.classList.add('first-player-message');
   firstPlayerMessage.innerHTML = `El jugador ${playerNames[firstPlayerIndex]} comenzará el juego.`;
+  document.getElementById('initial-roll-results').innerHTML = ''; // Clear previous roll results
   document.getElementById('initial-roll-results').appendChild(firstPlayerMessage);
-  document.getElementById('dice').style.display = 'inline';
+
+  setTimeout(() => {
+    document.getElementById('initial-roll-results').innerHTML = ''; // Clear previous roll results
+    startTurns();
+  }, 2000);
 }
 
+function startTurns() {
+  currentPlayerIndex = initialRolls.indexOf(Math.max(...initialRolls));
+  playTurn();
+}
 
+function playTurn() {
+  const currentPlayer = playerNames[currentPlayerIndex];
+  const rollPromptContainer = document.getElementById('initial-roll-results');
+  rollPromptContainer.innerHTML = ''; // Clear previous roll prompt
+
+  const rollPrompt = document.createElement('div');
+  rollPrompt.classList.add('roll-prompt');
+  rollPrompt.innerHTML = `Es el turno de ${currentPlayer}. Lanza los dados.`;
+  rollPromptContainer.appendChild(rollPrompt);
+
+  document.getElementById('dice').addEventListener('click', () => {
+    const dice1Value = Math.floor(Math.random() * 6) + 1;
+    const dice2Value = Math.floor(Math.random() * 6) + 1;
+    const sum = dice1Value + dice2Value;
+
+    const result1 = document.getElementById('result1');
+    const result2 = document.getElementById('result2');
+    const resultContainer = document.querySelector('.result-container');
+
+    result1.src = `images/dado/${dice1Value}.png`;
+    result2.src = `images/dado/${dice2Value}.png`;
+    result1.style.display = 'inline';
+    result2.style.display = 'inline';
+    resultContainer.style.display = 'flex';
+
+    // Mostrar el resultado de la suma en el centro del tablero
+    const board = document.getElementById('board');
+    const resultDiv = document.createElement('div');
+    resultDiv.classList.add('dice-result');
+    resultDiv.innerHTML = `
+      <img src="images/resultados/${sum}.png" alt="Resultado ${sum}">
+    `;
+    board.appendChild(resultDiv);
+
+    setTimeout(() => {
+      result1.style.display = 'none';
+      result2.style.display = 'none';
+      resultContainer.style.display = 'none';
+      resultDiv.remove();
+      movePlayer(currentPlayerIndex, sum);
+    }, 2000);
+  }, { once: true });
+}
+
+function movePlayer(playerIndex, steps) {
+  const playerCharacter = document.querySelector(`.board-character[data-player="${playerIndex}"]`);
+  let currentPosition = parseInt(playerCharacter.dataset.position);
+  let newPosition = (currentPosition + steps) % cells.length;
+
+  playerCharacter.dataset.position = newPosition;
+  const newCell = document.querySelector(`.cell:nth-child(${newPosition + 1})`);
+  newCell.appendChild(playerCharacter);
+
+  // Pasar al siguiente jugador
+  currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+  playTurn();
+}
