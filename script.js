@@ -693,31 +693,6 @@ function checkGameEnd() {
   }
 }
 
-function payRent(playerIndex, cellIndex) {
-  const ownerIndex = propertiesOwned[cellIndex];
-  const rent = (cellIndex + 1) * 5;
-
-  const rentPromptContainer = document.createElement('div');
-  rentPromptContainer.classList.add('rent-prompt');
-  rentPromptContainer.innerHTML = `
-    <p>${playerNames[playerIndex]} ha caído en ${cells[cellIndex].text} y debe pagar €${rent} a ${playerNames[ownerIndex]}.</p>
-    <button onclick="confirmRentPayment(${playerIndex}, ${ownerIndex}, ${rent})">Pagar</button>
-  `;
-  document.body.appendChild(rentPromptContainer);
-}
-
-function confirmRentPayment(playerIndex, ownerIndex, rent) {
-  playerBalances[playerIndex] -= rent;
-  playerBalances[ownerIndex] += rent;
-
-  document.querySelector('.rent-prompt').remove();
-  updatePlayerList();
-
-  // Pasar al siguiente jugador
-  currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
-  playTurn();
-}
-
 function updatePlayerList() {
   const playerListDiv = document.querySelector('.player-list');
   playerListDiv.innerHTML = `<h2>Jugadores</h2>`;
@@ -732,53 +707,4 @@ function updatePlayerList() {
     `;
     playerListDiv.appendChild(playerDiv);
   });
-
-  function handleCellAction(playerIndex, cellIndex) {
-    const cell = cells[cellIndex];
-    if (cell.type === 'property' && !propertiesOwned[cellIndex]) {
-      promptPropertyPurchase(playerIndex, cellIndex);
-    } else if (cell.type === 'property' && propertiesOwned[cellIndex] !== playerIndex) {
-      payRent(playerIndex, cellIndex);
-    } else if (cell.class === 'IR_A_LA_CÁRCEL') {
-      goToPrison(playerIndex);
-    } else if (cell.class === 'PARKING') {
-      handleParkingEvent(playerIndex);
-    } else {
-      // Pasar al siguiente jugador si no hay acción
-      currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
-      playTurn();
-    }
-  }
-
-  function goToPrison(playerIndex) {
-    playerBalances[playerIndex] -= 100; // Pagar multa de 100€
-    updatePlayerList();
-
-    // Mostrar mensaje de ir a la cárcel
-    const jailPromptContainer = document.createElement('div');
-    jailPromptContainer.classList.add('jail-prompt');
-    jailPromptContainer.innerHTML = `
-      <h2>${playerNames[playerIndex]} va a la cárcel</h2>
-      <p>Has pagado una multa de 100€ y te quedarás un turno en la cárcel.</p>
-      <button onclick="closeJailPrompt()">Aceptar</button>
-    `;
-    document.body.appendChild(jailPromptContainer);
-
-    // Mover al jugador a la casilla de cárcel
-    const jailCell = document.querySelector('.cell.CÁRCEL');
-    const playerCharacter = document.querySelector(`.board-character[data-player="${playerIndex}"]`);
-    playerCharacter.dataset.position = cells.findIndex(cell => cell.class === 'CÁRCEL');
-    jailCell.appendChild(playerCharacter);
-
-    // Saltar el siguiente turno del jugador
-    setTimeout(() => {
-      currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
-      playTurn();
-    }, 5000);
-  }
-
-  function closeJailPrompt() {
-    const jailPromptContainer = document.querySelector('.jail-prompt');
-    jailPromptContainer.remove();
-  }
 }
