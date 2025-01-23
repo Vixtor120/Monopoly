@@ -13,7 +13,7 @@ const cells = [
   { type: 'community', text: 'Caja de Comunidad', position: '11 / 9' },
   { type: 'property', text: 'Aula SMX-B', position: '11 / 8' },
   { type: 'tax', text: '', position: '11 / 7', class: 'soborno-javi' },
-  { type: 'railroad', text: 'Ferrocarril', position: '11 / 6' },
+  { type: 'lucky', text: '', position: '11 / 6' }, 
   { type: 'property', text: 'Aula-DAM', position: '11 / 5' },
   { type: 'lucky', text: '', position: '11 / 4' },
   { type: 'property', text: 'Aula-ASIX', position: '11 / 3' },
@@ -24,9 +24,9 @@ const cells = [
   { type: 'utility', text: 'Compañía Eléctrica', position: '9 / 1' },
   { type: 'property', text: 'Secretaria', position: '8 / 1' },
   { type: 'property', text: 'Casa de Roberto', position: '7 / 1' },
-  { type: 'railroad', text: 'Ferrocaril', position: '6 / 1' },
+  { type: 'community', text: '', position: '6 / 1' }, 
   { type: 'property', text: '1r ESO', position: '5 / 1' },
-  { type: 'community', text: 'Caja de Comunidad', position: '4 / 1' },
+  { type: 'community', text: '', position: '4 / 1' },
   { type: 'property', text: '2nd ESO', position: '3 / 1' },
   { type: 'property', text: '3r ESO', position: '2 / 1' },
   { type: 'corner', text: '', position: '1 / 1', class: 'PARKING' },
@@ -35,7 +35,7 @@ const cells = [
   { type: 'lucky', text: '', position: '1 / 3' },
   { type: 'property', text: 'Despacho Amador', position: '1 / 4' },
   { type: 'property', text: '1r Bachillerato', position: '1 / 5' },
-  { type: 'railroad', text: 'Ferrocarril', position: '1 / 6' },
+  { type: 'community', text: '', position: '1 / 6' }, 
   { type: 'property', text: '2nd Bachillerato', position: '1 / 7' },
   { type: 'property', text: 'Aula-MIPA-A', position: '1 / 8' },
   { type: 'utility', text: 'Compañía de Agua', position: '1 / 9' },
@@ -46,7 +46,7 @@ const cells = [
   { type: 'property', text: 'Despacho Director', position: '3 / 11' },
   { type: 'community', text: 'Caja de Comunidad', position: '4 / 11' },
   { type: 'property', text: 'Monlau Maquinista', position: '5 / 11' },
-  { type: 'railroad', text: 'Ferrocarril', position: '6 / 11' },
+  { type: 'lucky', text: '', position: '6 / 11' },
   { type: 'lucky', text: '', position: '7 / 11' },
   { type: 'property', text: 'Calle Monlau', position: '8 / 11' },
   { type: 'tax', text: '', position: '9 / 11', class: 'examen-roberto' },
@@ -197,14 +197,14 @@ function selectPlayers(numPlayers) {
   const playerNamesDiv = document.createElement('div');
   playerNamesDiv.classList.add('player-names');
   playerNamesDiv.innerHTML = `<h2>Ingresa los nombres de los jugadores</h2>`;
-  
+
   for (let i = 1; i <= numPlayers; i++) {
     playerNamesDiv.innerHTML += `
       <label for="player${i}">Jugador ${i}:</label>
       <input type="text" id="player${i}" name="player${i}">
     `;
   }
-  
+
   playerNamesDiv.innerHTML += `<button onclick="startGameWithNames()">Iniciar Juego</button>`;
   document.body.appendChild(playerNamesDiv);
 }
@@ -223,6 +223,7 @@ let initialRolls = [];
 let currentPlayerIndex = 0;
 let playerBalances = [];
 let propertiesOwned = {};
+let playersInJail = [];
 
 function startGameWithNames() {
   // Obtener nombres de los jugadores
@@ -403,6 +404,18 @@ function startTurns() {
 
 function playTurn() {
   const currentPlayer = playerNames[currentPlayerIndex];
+
+  // Verificar si el jugador está en la cárcel
+  if (playersInJail.includes(currentPlayerIndex)) {
+    // Eliminar el jugador de la lista de jugadores en la cárcel
+    playersInJail = playersInJail.filter(index => index !== currentPlayerIndex);
+
+    // Pasar al siguiente jugador
+    currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+    playTurn();
+    return;
+  }
+
   const rollPromptContainer = document.getElementById('initial-roll-results');
   rollPromptContainer.innerHTML = ''; // Clear previous roll prompt
 
@@ -469,6 +482,10 @@ function handleCellAction(playerIndex, cellIndex) {
     promptPropertyPurchase(playerIndex, cellIndex);
   } else if (cell.type === 'property' && propertiesOwned[cellIndex] !== playerIndex) {
     payRent(playerIndex, cellIndex);
+  } else if (cell.class === 'IR_A_LA_CÁRCEL') {
+    goToPrison(playerIndex);
+  } else if (cell.class === 'PARKING') {
+    handleParkingEvent(playerIndex);
   } else {
     // Pasar al siguiente jugador si no hay acción
     currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
@@ -476,9 +493,70 @@ function handleCellAction(playerIndex, cellIndex) {
   }
 }
 
+function handleParkingEvent(playerIndex) {
+  const event = Math.random() < 0.5 ? 'found' : 'stolen';
+  const amount = event === 'found' ? 200 : -100;
+  playerBalances[playerIndex] += amount;
+
+  const parkingPromptContainer = document.createElement('div');
+  parkingPromptContainer.classList.add('parking-prompt');
+  parkingPromptContainer.innerHTML = `
+    <h2>${playerNames[playerIndex]} ha caído en el Parking</h2>
+    <p>${event === 'found' ? '¡Has encontrado 200€ en el suelo!' : '¡Te han robado 100€!'}</p>
+    <button onclick="closeParkingPrompt()">Aceptar</button>
+  `;
+  document.body.appendChild(parkingPromptContainer);
+
+  updatePlayerList();
+}
+
+function closeParkingPrompt() {
+  const parkingPromptContainer = document.querySelector('.parking-prompt');
+  parkingPromptContainer.remove();
+
+  // Pasar al siguiente jugador
+  currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+  playTurn();
+}
+
+function goToPrison(playerIndex) {
+  playerBalances[playerIndex] -= 100; // Pagar multa de 100€
+  updatePlayerList();
+
+  // Añadir el jugador a la lista de jugadores en la cárcel
+  playersInJail.push(playerIndex);
+
+  // Mostrar mensaje de ir a la cárcel
+  const jailPromptContainer = document.createElement('div');
+  jailPromptContainer.classList.add('jail-prompt');
+  jailPromptContainer.innerHTML = `
+    <h2>${playerNames[playerIndex]} va a la cárcel</h2>
+    <p>Has pagado una multa de 100€ y te quedarás un turno en la cárcel.</p>
+    <button onclick="closeJailPrompt()">Aceptar</button>
+  `;
+  document.body.appendChild(jailPromptContainer);
+
+  // Mover al jugador a la casilla de cárcel
+  const jailCell = document.querySelector('.cell.CÁRCEL');
+  const playerCharacter = document.querySelector(`.board-character[data-player="${playerIndex}"]`);
+  playerCharacter.dataset.position = cells.findIndex(cell => cell.class === 'CÁRCEL');
+  jailCell.appendChild(playerCharacter);
+
+  // Saltar el siguiente turno del jugador
+  setTimeout(() => {
+    currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+    playTurn();
+  }, 5000);
+}
+
+function closeJailPrompt() {
+  const jailPromptContainer = document.querySelector('.jail-prompt');
+  jailPromptContainer.remove();
+}
+
 function showPurchasePrompt(property, playerIndex, cellIndex) {
   const purchasePromptContainer = document.getElementById("purchase-prompt-container");
-  
+
   purchasePromptContainer.innerHTML = `
     <div class="purchase-prompt">
       <h2>¿Quieres comprar ${property.text}?</h2>
@@ -527,7 +605,7 @@ function promptPropertyPurchase(playerIndex, cellIndex) {
 
 function showInsufficientFundsMessage(playerIndex) {
   const purchasePromptContainer = document.getElementById("purchase-prompt-container");
-  
+
   purchasePromptContainer.innerHTML = `
     <div class="purchase-prompt">
       <h2>No tienes suficiente dinero para comprar esta propiedad.</h2>
@@ -619,24 +697,25 @@ function payRent(playerIndex, cellIndex) {
   const ownerIndex = propertiesOwned[cellIndex];
   const rent = (cellIndex + 1) * 5;
 
+  const rentPromptContainer = document.createElement('div');
+  rentPromptContainer.classList.add('rent-prompt');
+  rentPromptContainer.innerHTML = `
+    <p>${playerNames[playerIndex]} ha caído en ${cells[cellIndex].text} y debe pagar €${rent} a ${playerNames[ownerIndex]}.</p>
+    <button onclick="confirmRentPayment(${playerIndex}, ${ownerIndex}, ${rent})">Pagar</button>
+  `;
+  document.body.appendChild(rentPromptContainer);
+}
+
+function confirmRentPayment(playerIndex, ownerIndex, rent) {
   playerBalances[playerIndex] -= rent;
   playerBalances[ownerIndex] += rent;
 
-  const rentPrompt = document.createElement('div');
-  rentPrompt.classList.add('rent-prompt');
-  rentPrompt.innerHTML = `
-    <p>${playerNames[playerIndex]} ha pagado €${rent} a ${playerNames[ownerIndex]} por caer en ${cells[cellIndex].text}.</p>
-  `;
-  document.body.appendChild(rentPrompt);
+  document.querySelector('.rent-prompt').remove();
+  updatePlayerList();
 
-  setTimeout(() => {
-    document.querySelector('.rent-prompt').remove();
-    updatePlayerList();
-
-    // Pasar al siguiente jugador
-    currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
-    playTurn();
-  }, 5000);
+  // Pasar al siguiente jugador
+  currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+  playTurn();
 }
 
 function updatePlayerList() {
@@ -653,4 +732,53 @@ function updatePlayerList() {
     `;
     playerListDiv.appendChild(playerDiv);
   });
+
+  function handleCellAction(playerIndex, cellIndex) {
+    const cell = cells[cellIndex];
+    if (cell.type === 'property' && !propertiesOwned[cellIndex]) {
+      promptPropertyPurchase(playerIndex, cellIndex);
+    } else if (cell.type === 'property' && propertiesOwned[cellIndex] !== playerIndex) {
+      payRent(playerIndex, cellIndex);
+    } else if (cell.class === 'IR_A_LA_CÁRCEL') {
+      goToPrison(playerIndex);
+    } else if (cell.class === 'PARKING') {
+      handleParkingEvent(playerIndex);
+    } else {
+      // Pasar al siguiente jugador si no hay acción
+      currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+      playTurn();
+    }
+  }
+
+  function goToPrison(playerIndex) {
+    playerBalances[playerIndex] -= 100; // Pagar multa de 100€
+    updatePlayerList();
+
+    // Mostrar mensaje de ir a la cárcel
+    const jailPromptContainer = document.createElement('div');
+    jailPromptContainer.classList.add('jail-prompt');
+    jailPromptContainer.innerHTML = `
+      <h2>${playerNames[playerIndex]} va a la cárcel</h2>
+      <p>Has pagado una multa de 100€ y te quedarás un turno en la cárcel.</p>
+      <button onclick="closeJailPrompt()">Aceptar</button>
+    `;
+    document.body.appendChild(jailPromptContainer);
+
+    // Mover al jugador a la casilla de cárcel
+    const jailCell = document.querySelector('.cell.CÁRCEL');
+    const playerCharacter = document.querySelector(`.board-character[data-player="${playerIndex}"]`);
+    playerCharacter.dataset.position = cells.findIndex(cell => cell.class === 'CÁRCEL');
+    jailCell.appendChild(playerCharacter);
+
+    // Saltar el siguiente turno del jugador
+    setTimeout(() => {
+      currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+      playTurn();
+    }, 5000);
+  }
+
+  function closeJailPrompt() {
+    const jailPromptContainer = document.querySelector('.jail-prompt');
+    jailPromptContainer.remove();
+  }
 }
