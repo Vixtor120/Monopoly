@@ -221,27 +221,36 @@ let selectedCharacters = [];
 let playerNames = [];
 let initialRolls = [];
 let currentPlayerIndex = 0;
+let playerBalances = [];
+let propertiesOwned = {};
 
 function startGameWithNames() {
   // Obtener nombres de los jugadores
   playerNames = [];
   let valid = true;
+  const nameSet = new Set();
   document.querySelectorAll('.player-names input').forEach(input => {
-    if (input.value.trim() === '') {
+    const name = input.value.trim();
+    if (name === '' || nameSet.has(name)) {
       valid = false;
       input.classList.add('error');
     } else {
       input.classList.remove('error');
-      playerNames.push(input.value);
+      playerNames.push(name);
+      nameSet.add(name);
     }
   });
 
   if (!valid) {
     const errorMessageDiv = document.getElementById('error-message');
-    errorMessageDiv.textContent = 'Todos los jugadores deben tener un nombre.';
+    errorMessageDiv.textContent = 'Todos los jugadores deben tener un nombre único.';
     errorMessageDiv.style.display = 'block';
     return;
   }
+
+  // Initialize player balances and properties owned
+  playerBalances = new Array(playerNames.length).fill(1200);
+  propertiesOwned = {};
 
   // Ocultar mensaje de error si todo es válido
   document.getElementById('error-message').style.display = 'none';
@@ -441,11 +450,207 @@ function movePlayer(playerIndex, steps) {
   let currentPosition = parseInt(playerCharacter.dataset.position);
   let newPosition = (currentPosition + steps) % cells.length;
 
+  // Check if the player passes the "SALIDA" cell
+  if (newPosition < currentPosition) {
+    playerBalances[playerIndex] += 300; // Add 300€ for passing "SALIDA"
+    updatePlayerList();
+  }
+
   playerCharacter.dataset.position = newPosition;
   const newCell = document.querySelector(`.cell:nth-child(${newPosition + 1})`);
   newCell.appendChild(playerCharacter);
 
+  handleCellAction(playerIndex, newPosition);
+}
+
+function handleCellAction(playerIndex, cellIndex) {
+  const cell = cells[cellIndex];
+  if (cell.type === 'property' && !propertiesOwned[cellIndex]) {
+    promptPropertyPurchase(playerIndex, cellIndex);
+  } else if (cell.type === 'property' && propertiesOwned[cellIndex] !== playerIndex) {
+    payRent(playerIndex, cellIndex);
+  } else {
+    // Pasar al siguiente jugador si no hay acción
+    currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+    playTurn();
+  }
+}
+
+function showPurchasePrompt(property, playerIndex, cellIndex) {
+  const purchasePromptContainer = document.getElementById("purchase-prompt-container");
+  
+  purchasePromptContainer.innerHTML = `
+    <div class="purchase-prompt">
+      <h2>¿Quieres comprar ${property.text}?</h2>
+      <p>Precio: €${(cellIndex + 1) * 50}</p>
+      <button onclick="buyProperty(${playerIndex}, ${cellIndex}, ${(cellIndex + 1) * 50})">Comprar</button>
+      <button onclick="skipPurchase()">No, gracias</button>
+    </div>
+  `;
+
+  purchasePromptContainer.style.display = "block";
+}
+
+function closePurchasePrompt() {
+  const purchasePromptContainer = document.getElementById("purchase-prompt-container");
+  purchasePromptContainer.style.display = "none";
+  purchasePromptContainer.innerHTML = ""; // Limpia el contenido
+}
+
+function skipPurchase() {
+  closePurchasePrompt();
+
   // Pasar al siguiente jugador
   currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
   playTurn();
+}
+
+function promptPropertyPurchase(playerIndex, cellIndex) {
+  const cell = cells[cellIndex];
+  const propertyPrice = (cellIndex + 1) * 50;
+  const playerBalance = playerBalances[playerIndex];
+
+  // Check if the property is already owned by another player
+  if (propertiesOwned[cellIndex] !== undefined) {
+    // Pasar al siguiente jugador si la propiedad ya está comprada
+    currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+    playTurn();
+    return;
+  }
+
+  if (playerBalance >= propertyPrice) {
+    showPurchasePrompt(cell, playerIndex, cellIndex);
+  } else {
+    showInsufficientFundsMessage(playerIndex);
+  }
+}
+
+function showInsufficientFundsMessage(playerIndex) {
+  const purchasePromptContainer = document.getElementById("purchase-prompt-container");
+  
+  purchasePromptContainer.innerHTML = `
+    <div class="purchase-prompt">
+      <h2>No tienes suficiente dinero para comprar esta propiedad.</h2>
+      <button onclick="skipPurchase()">Pasar Turno</button>
+    </div>
+  `;
+
+  purchasePromptContainer.style.display = "block";
+}
+
+function buyProperty(playerIndex, cellIndex, propertyPrice) {
+  playerBalances[playerIndex] -= propertyPrice;
+  propertiesOwned[cellIndex] = playerIndex;
+
+  // Display the owner's image inside the property cell at the top center
+  const propertyCell = document.querySelector(`.cell:nth-child(${cellIndex + 1})`);
+  const ownerImg = document.createElement('img');
+  ownerImg.src = `images/jugadores/${selectedCharacters[playerIndex]}`;
+  ownerImg.alt = `Owner ${playerNames[playerIndex]}`;
+  ownerImg.classList.add('property-owner');
+  propertyCell.style.position = 'relative'; // Ensure the cell is positioned relative
+  propertyCell.appendChild(ownerImg);
+
+  closePurchasePrompt();
+  updatePlayerList();
+
+  // Pasar al siguiente jugador
+  currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+  playTurn();
+}
+
+function payRent(playerIndex, cellIndex) {
+  const ownerIndex = propertiesOwned[cellIndex];
+  const rent = (cellIndex + 1) * 50 * 0.1; // 10% del valor de la propiedad
+
+  const rentPromptContainer = document.getElementById("purchase-prompt-container");
+  rentPromptContainer.innerHTML = `
+    <div class="rent-prompt">
+      <h2>${playerNames[playerIndex]} ha caído en ${cells[cellIndex].text}</h2>
+      <p>Debe pagar €${rent.toFixed(2)} a ${playerNames[ownerIndex]}</p>
+      <button onclick="payRentAmount(${playerIndex}, ${ownerIndex}, ${rent.toFixed(2)})">Pagar</button>
+    </div>
+  `;
+  rentPromptContainer.style.display = "block";
+}
+
+function payRentAmount(playerIndex, ownerIndex, rent) {
+  playerBalances[playerIndex] -= rent;
+  playerBalances[ownerIndex] += rent;
+
+  const rentPromptContainer = document.getElementById("purchase-prompt-container");
+  rentPromptContainer.style.display = "none";
+  rentPromptContainer.innerHTML = ""; // Limpia el contenido
+
+  updatePlayerList();
+  checkBankruptcy(playerIndex);
+
+  // Pasar al siguiente jugador
+  currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+  playTurn();
+}
+
+function checkBankruptcy(playerIndex) {
+  if (playerBalances[playerIndex] <= 0) {
+    alert(`${playerNames[playerIndex]} se ha quedado sin dinero y está en bancarrota.`);
+    playerNames.splice(playerIndex, 1);
+    selectedCharacters.splice(playerIndex, 1);
+    playerBalances.splice(playerIndex, 1);
+
+    // Actualizar el índice del jugador actual
+    if (currentPlayerIndex >= playerNames.length) {
+      currentPlayerIndex = 0;
+    }
+
+    updatePlayerList();
+    checkGameEnd();
+  }
+}
+
+function checkGameEnd() {
+  if (playerNames.length === 1) {
+    alert(`¡${playerNames[0]} es el ganador!`);
+    // Reiniciar el juego o mostrar un mensaje final
+    location.reload(); // Recargar la página para reiniciar el juego
+  }
+}
+
+function payRent(playerIndex, cellIndex) {
+  const ownerIndex = propertiesOwned[cellIndex];
+  const rent = (cellIndex + 1) * 5;
+
+  playerBalances[playerIndex] -= rent;
+  playerBalances[ownerIndex] += rent;
+
+  const rentPrompt = document.createElement('div');
+  rentPrompt.classList.add('rent-prompt');
+  rentPrompt.innerHTML = `
+    <p>${playerNames[playerIndex]} ha pagado €${rent} a ${playerNames[ownerIndex]} por caer en ${cells[cellIndex].text}.</p>
+  `;
+  document.body.appendChild(rentPrompt);
+
+  setTimeout(() => {
+    document.querySelector('.rent-prompt').remove();
+    updatePlayerList();
+
+    // Pasar al siguiente jugador
+    currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+    playTurn();
+  }, 5000);
+}
+
+function updatePlayerList() {
+  const playerListDiv = document.querySelector('.player-list');
+  playerListDiv.innerHTML = `<h2>Jugadores</h2>`;
+
+  playerNames.forEach((name, index) => {
+    const playerDiv = document.createElement('div');
+    playerDiv.classList.add('player-name');
+    playerDiv.innerHTML = `
+      <img src="images/jugadores/${selectedCharacters[index]}" alt="Personaje ${index + 1}" class="player-character">
+      <span>${name}</span>
+      <span class="player-money">€${playerBalances[index]}</span>
+    `;
+    playerListDiv.appendChild(playerDiv);
+  });
 }

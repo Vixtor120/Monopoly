@@ -604,12 +604,86 @@ input.error {
 }
 
 .property-owner {
-  position: absolute;
   width: 20px;
   height: 20px;
   border-radius: 50%;
   border: 2px solid black;
-  background-color: white;
+  position: absolute;
   top: 5px;
-  right: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.cell .property-owner {
+  margin-left: 5px; /* Adjust the margin to position the image next to the cell */
+}
+
+.purchase-prompt, .rent-prompt {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
+  border: 2px solid black;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  z-index: 1000;
+}
+
+.purchase-prompt button, .rent-prompt button {
+  margin: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #ff0000; /* Monopoly red */
+  color: white;
+  border: 2px solid #000000; /* Black border */
+  border-radius: 5px;
+  transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+
+.purchase-prompt button:hover, .rent-prompt button:hover {
+  background-color: #cc0000; /* Darker red on hover */
+  transform: scale(1.05); /* Slightly larger on hover */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow on hover */
+}
+
+.purchase-prompt button:active, .rent-prompt button:active {
+  background-color: #990000; /* Even darker red on click */
+  transform: scale(0.95); /* Slightly smaller on click */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Reduce shadow on click */
+}
+
+#purchase-prompt-container {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border: 2px solid black;
+  padding: 20px;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.purchase-prompt {
+  text-align: center;
+}
+
+.purchase-prompt h2 {
+  margin-bottom: 10px;
+}
+
+.purchase-prompt p {
+  margin-bottom: 20px;
+}
+
+.purchase-prompt button {
+  margin: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
 }
