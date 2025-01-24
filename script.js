@@ -21,7 +21,7 @@ const cells = [
   { type: 'corner', text: '', position: '11 / 1', class: 'CÁRCEL' },
   // Lado izquierdo
   { type: 'property', text: 'Aula-GEAD', position: '10 / 1' },
-  { type: 'utility', text: 'Compañía Eléctrica', position: '9 / 1' },
+  { type: 'tax', text: '', position: '9 / 1' , class: 'examen-roberto'},
   { type: 'property', text: 'Secretaria', position: '8 / 1' },
   { type: 'property', text: 'Casa de Roberto', position: '7 / 1' },
   { type: 'community', text: '', position: '6 / 1' }, 
@@ -38,7 +38,7 @@ const cells = [
   { type: 'community', text: '', position: '1 / 6' }, 
   { type: 'property', text: '2nd Bachillerato', position: '1 / 7' },
   { type: 'property', text: 'Aula-MIPA-A', position: '1 / 8' },
-  { type: 'utility', text: 'Compañía de Agua', position: '1 / 9' },
+  { type: 'tax', text: '', position: '1 / 9', class: 'soborno-javi' },
   { type: 'property', text: 'Aula-MIPA-B', position: '1 / 10' },
   { type: 'corner', text: '', position: '1 / 11', class: 'IR_A_LA_CÁRCEL' },
   // Lado derecho
@@ -224,7 +224,14 @@ const characters = [
   'jugador2.png',
   'jugador3.png',
   'jugador4.png',
-  'jugador5.png'
+  'jugador5.png',
+  'jugador6.png',
+  'jugador7.png',
+  'jugador8.png',
+  'jugador9.png',
+  'jugador10.png',
+  'jugador11.png',
+  'jugador12.png',
 ];
 
 let selectedCharacters = [];
@@ -546,6 +553,10 @@ function handleCellAction(playerIndex, cellIndex) {
     handleSobornoJaviEvent(playerIndex);
   } else if (cell.class === 'examen-roberto') {
     handleExamenRobertoEvent(playerIndex);
+  } else if (cell.type === 'lucky') {
+    handleLuckyEvent(playerIndex);
+  } else if (cell.type === 'community') {
+    handleCommunityEvent(playerIndex);
   } else {
     // Pasar al siguiente jugador si no hay acción
     currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
@@ -558,35 +569,26 @@ function handleCellAction(playerIndex, cellIndex) {
  * @param {number} playerIndex - El índice del jugador.
  */
 function handleExamenRobertoEvent(playerIndex) {
+  const examenContainer = document.getElementById('examen-roberto-container');
+  examenContainer.classList.add('examen-prompt');
+
   const amount = Math.random() < 0.5 ? -200 : -400;
   playerBalances[playerIndex] += amount;
 
   const message = amount === -200 ? '¡Has perdido 200€!' : '¡Has perdido 400€ y Roberto se ríe de ti!';
-  showExamenRobertoResult(playerIndex, message);
-}
-
-/**
- * Muestra el resultado del evento "examen-roberto".
- * @param {number} playerIndex - El índice del jugador.
- * @param {string} message - El mensaje a mostrar.
- */
-function showExamenRobertoResult(playerIndex, message) {
-  const examenPromptContainer = document.createElement('div');
-  examenPromptContainer.classList.add('examen-prompt');
-  examenPromptContainer.innerHTML = `
+  examenContainer.innerHTML = `
     <h2>${message}</h2>
     <button onclick="closeExamenPrompt()">Aceptar</button>
   `;
-  document.body.appendChild(examenPromptContainer);
+
+  examenContainer.style.display = 'block';
   updatePlayerList();
 }
 
-/**
- * Cierra el mensaje del evento "examen-roberto".
- */
 function closeExamenPrompt() {
-  const examenPromptContainer = document.querySelector('.examen-prompt');
-  examenPromptContainer.remove();
+  const examenContainer = document.getElementById('examen-roberto-container');
+  examenContainer.style.display = 'none';
+  examenContainer.innerHTML = '';
 
   // Pasar al siguiente jugador
   currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
@@ -598,15 +600,43 @@ function closeExamenPrompt() {
  * @param {number} playerIndex - El índice del jugador.
  */
 function handleSobornoJaviEvent(playerIndex) {
-  const sobornoPromptContainer = document.createElement('div');
-  sobornoPromptContainer.classList.add('soborno-prompt');
-  sobornoPromptContainer.innerHTML = `
+  const sobornoContainer = document.getElementById('soborno-javi-container');
+  sobornoContainer.classList.add('soborno-prompt');
+  sobornoContainer.innerHTML = `
     <h2>${playerNames[playerIndex]}, has encontrado a Javi</h2>
     <p>¿Qué quieres hacer?</p>
     <button onclick="saludarJavi(${playerIndex})">Saludar</button>
     <button onclick="sobornarJavi(${playerIndex})">Sobornar</button>
   `;
-  document.body.appendChild(sobornoPromptContainer);
+
+  sobornoContainer.style.display = 'block';
+}
+
+/**
+ * Muestra el resultado del evento "soborno-javi".
+ * @param {number} playerIndex - El índice del jugador.
+ * @param {string} message - El mensaje a mostrar.
+ */
+function showSobornoResult(playerIndex, message) {
+  const sobornoContainer = document.getElementById('soborno-javi-container');
+  sobornoContainer.innerHTML = `
+    <h2>${message}</h2>
+    <button onclick="closeSobornoPrompt()">Aceptar</button>
+  `;
+  updatePlayerList();
+}
+
+/**
+ * Cierra el mensaje del evento "soborno-javi".
+ */
+function closeSobornoPrompt() {
+  const sobornoContainer = document.getElementById('soborno-javi-container');
+  sobornoContainer.style.display = 'none';
+  sobornoContainer.innerHTML = '';
+
+  // Pasar al siguiente jugador
+  currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+  playTurn();
 }
 
 /**
@@ -937,4 +967,78 @@ function updatePlayerList() {
     `;
     playerListDiv.appendChild(playerDiv);
   });
+}
+
+const luckyCards = [
+  { image: 'images/suerte/suerte1.png', action: (playerIndex) => {playerBalances[playerIndex] += 200;} },
+  { image: 'images/suerte/suerte2.png', action: (playerIndex) => {handleLuckyEvent(playerIndex);} },
+  { image: 'images/suerte/suerte3.png', action: (playerIndex) => { playerBalances[playerIndex] += 100; } },
+  { image: 'images/suerte/suerte4.png', action: (playerIndex) => { playerBalances[playerIndex] += 50; } },
+  { image: 'images/suerte/suerte5.png', action: (playerIndex) => { playerBalances[playerIndex] += 50; } },
+  { image: 'images/suerte/suerte6.png', action: (playerIndex) => { playerBalances[playerIndex] += 1; } },
+  { image: 'images/suerte/suerte7.png', action: (playerIndex) => { playerBalances[playerIndex] -= 20; } },
+  { image: 'images/suerte/suerte8.png', action: (playerIndex) => { playerBalances[playerIndex] -= 100; } },
+];
+
+function handleLuckyEvent(playerIndex) {
+  const randomIndex = Math.floor(Math.random() * luckyCards.length);
+  const luckyCard = luckyCards[randomIndex];
+
+  const luckyPromptContainer = document.createElement('div');
+  luckyPromptContainer.classList.add('lucky-prompt');
+  luckyPromptContainer.innerHTML = `
+    <img src="${luckyCard.image}" alt="Carta de suerte" style="display: block; margin: 0 auto;">
+    <button onclick="applyLuckyCard(${playerIndex}, ${randomIndex})" style="display: block; margin: 10px auto;">Aceptar</button>
+  `;
+  document.body.appendChild(luckyPromptContainer);
+}
+
+function applyLuckyCard(playerIndex, cardIndex) {
+  const luckyCard = luckyCards[cardIndex];
+  luckyCard.action(playerIndex);
+
+  const luckyPromptContainer = document.querySelector('.lucky-prompt');
+  luckyPromptContainer.remove();
+
+  updatePlayerList();
+
+  // Pasar al siguiente jugador
+  currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+  playTurn();
+}
+
+const communityCards = [
+  { image: 'images/caja/caja1.png', action: (playerIndex) => {playerBalances[playerIndex] -= 200;} },
+  { image: 'images/caja/caja2.png', action: (playerIndex) => { playerBalances[playerIndex] -= 10; } },
+  { image: 'images/caja/caja3.png', action: (playerIndex) => { playerBalances[playerIndex] -= 100; } },
+  { image: 'images/caja/caja4.png', action: (playerIndex) => { playerBalances[playerIndex] -= 200; } },
+  { image: 'images/caja/caja5.png', action: (playerIndex) => { playerBalances[playerIndex] += 500; } },
+  { image: 'images/caja/caja6.png', action: (playerIndex) => { playerBalances[playerIndex] += 100; } },
+];
+
+function handleCommunityEvent(playerIndex) {
+  const randomIndex = Math.floor(Math.random() * communityCards.length);
+  const communityCard = communityCards[randomIndex];
+
+  const communityPromptContainer = document.createElement('div');
+  communityPromptContainer.classList.add('community-prompt');
+  communityPromptContainer.innerHTML = `
+    <img src="${communityCard.image}" alt="Carta de comunidad" style="display: block; margin: 0 auto;">
+    <button onclick="applyCommunityCard(${playerIndex}, ${randomIndex})" style="display: block; margin: 10px auto;">Aceptar</button>
+  `;
+  document.body.appendChild(communityPromptContainer);
+}
+
+function applyCommunityCard(playerIndex, cardIndex) {
+  const communityCard = communityCards[cardIndex];
+  communityCard.action(playerIndex);
+
+  const communityPromptContainer = document.querySelector('.community-prompt');
+  communityPromptContainer.remove();
+
+  updatePlayerList();
+
+  // Pasar al siguiente jugador
+  currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+  playTurn();
 }
