@@ -143,6 +143,9 @@ document.addEventListener('DOMContentLoaded', () => {
   dice.addEventListener('click', rollDice);
 });
 
+/**
+ * Lanza los dados y muestra los resultados.
+ */
 function rollDice() {
   const dice1Value = Math.floor(Math.random() * 6) + 1;
   const dice2Value = Math.floor(Math.random() * 6) + 1;
@@ -174,6 +177,9 @@ function rollDice() {
   }, 2000);
 }
 
+/**
+ * Inicia el juego ocultando el botón de jugar y mostrando la selección de jugadores.
+ */
 function startGame() {
   document.querySelector('.play-button').style.display = 'none';
 
@@ -189,6 +195,10 @@ function startGame() {
   document.body.appendChild(playerSelectionDiv);
 }
 
+/**
+ * Selecciona el número de jugadores y muestra los campos de entrada para los nombres de los jugadores.
+ * @param {number} numPlayers - El número de jugadores.
+ */
 function selectPlayers(numPlayers) {
   // Ocultar selección de jugadores
   document.querySelector('.player-selection').style.display = 'none';
@@ -225,6 +235,9 @@ let playerBalances = [];
 let propertiesOwned = {};
 let playersInJail = [];
 
+/**
+ * Inicia el juego con los nombres de los jugadores ingresados.
+ */
 function startGameWithNames() {
   // Obtener nombres de los jugadores
   playerNames = [];
@@ -249,7 +262,7 @@ function startGameWithNames() {
     return;
   }
 
-  // Initialize player balances and properties owned
+  // Inicializar saldos de los jugadores y propiedades poseídas
   playerBalances = new Array(playerNames.length).fill(1200);
   propertiesOwned = {};
 
@@ -263,6 +276,11 @@ function startGameWithNames() {
   selectCharacter(0, playerNames);
 }
 
+/**
+ * Muestra la selección de personajes para el jugador actual.
+ * @param {number} playerIndex - El índice del jugador actual.
+ * @param {Array} playerNames - La lista de nombres de los jugadores.
+ */
 function selectCharacter(playerIndex, playerNames) {
   if (playerIndex >= playerNames.length) {
     // Todos los jugadores han seleccionado sus personajes
@@ -293,6 +311,10 @@ function selectCharacter(playerIndex, playerNames) {
   document.body.appendChild(characterSelectionDiv);
 }
 
+/**
+ * Inicia el juego con los personajes seleccionados.
+ * @param {Array} playerNames - La lista de nombres de los jugadores.
+ */
 function startGameWithCharacters(playerNames) {
   // Mostrar nombres de jugadores y sus personajes en el lado izquierdo
   const playerListDiv = document.createElement('div');
@@ -332,11 +354,17 @@ function startGameWithCharacters(playerNames) {
   document.getElementById('welcome-message').style.display = 'block';
 }
 
+/**
+ * Cierra el mensaje de bienvenida y muestra el mensaje de lanzamiento inicial.
+ */
 function closeWelcomeMessage() {
   document.getElementById('welcome-message').style.display = 'none';
   document.getElementById('initial-roll-message').style.display = 'block';
 }
 
+/**
+ * Inicia el lanzamiento inicial para todos los jugadores.
+ */
 function startInitialRoll() {
   document.getElementById('initial-roll-message').style.display = 'none';
   document.getElementById('dice').style.display = 'inline';
@@ -347,6 +375,9 @@ function startInitialRoll() {
   promptPlayerToRoll();
 }
 
+/**
+ * Solicita al jugador actual que lance los dados.
+ */
 function promptPlayerToRoll() {
   if (currentPlayerIndex >= playerNames.length) {
     determineFirstPlayer();
@@ -361,6 +392,12 @@ function promptPlayerToRoll() {
   document.getElementById('dice').addEventListener('click', rollDice);
 }
 
+/**
+ * Maneja el lanzamiento de dados para determinar el orden inicial.
+ * @param {number} dice1Value - El valor del primer dado.
+ * @param {number} dice2Value - El valor del segundo dado.
+ * @param {number} sum - La suma de los valores de los dados.
+ */
 function rollDiceForInitialOrder(dice1Value, dice2Value, sum) {
   const dice = document.getElementById('dice');
   dice.removeEventListener('click', rollDice);
@@ -382,6 +419,9 @@ function rollDiceForInitialOrder(dice1Value, dice2Value, sum) {
   }, 2000);
 }
 
+/**
+ * Determina el primer jugador basado en los lanzamientos iniciales.
+ */
 function determineFirstPlayer() {
   const maxRoll = Math.max(...initialRolls);
   const firstPlayerIndex = initialRolls.indexOf(maxRoll);
@@ -397,11 +437,17 @@ function determineFirstPlayer() {
   }, 2000);
 }
 
+/**
+ * Inicia los turnos para los jugadores.
+ */
 function startTurns() {
   currentPlayerIndex = initialRolls.indexOf(Math.max(...initialRolls));
   playTurn();
 }
 
+/**
+ * Juega el turno para el jugador actual.
+ */
 function playTurn() {
   const currentPlayer = playerNames[currentPlayerIndex];
 
@@ -458,14 +504,19 @@ function playTurn() {
   }, { once: true });
 }
 
+/**
+ * Mueve al jugador por el número especificado de pasos.
+ * @param {number} playerIndex - El índice del jugador.
+ * @param {number} steps - El número de pasos a mover.
+ */
 function movePlayer(playerIndex, steps) {
   const playerCharacter = document.querySelector(`.board-character[data-player="${playerIndex}"]`);
   let currentPosition = parseInt(playerCharacter.dataset.position);
   let newPosition = (currentPosition + steps) % cells.length;
 
-  // Check if the player passes the "SALIDA" cell
+  // Verificar si el jugador pasa por la casilla "SALIDA"
   if (newPosition < currentPosition) {
-    playerBalances[playerIndex] += 300; // Add 300€ for passing "SALIDA"
+    playerBalances[playerIndex] += 300; // Añadir 300€ por pasar por "SALIDA"
     updatePlayerList();
   }
 
@@ -476,6 +527,11 @@ function movePlayer(playerIndex, steps) {
   handleCellAction(playerIndex, newPosition);
 }
 
+/**
+ * Maneja la acción para la casilla en la que el jugador ha caído.
+ * @param {number} playerIndex - El índice del jugador.
+ * @param {number} cellIndex - El índice de la casilla.
+ */
 function handleCellAction(playerIndex, cellIndex) {
   const cell = cells[cellIndex];
   if (cell.type === 'property' && !propertiesOwned[cellIndex]) {
@@ -486,6 +542,10 @@ function handleCellAction(playerIndex, cellIndex) {
     goToPrison(playerIndex);
   } else if (cell.class === 'PARKING') {
     handleParkingEvent(playerIndex);
+  } else if (cell.class === 'soborno-javi') {
+    handleSobornoJaviEvent(playerIndex);
+  } else if (cell.class === 'examen-roberto') {
+    handleExamenRobertoEvent(playerIndex);
   } else {
     // Pasar al siguiente jugador si no hay acción
     currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
@@ -493,6 +553,118 @@ function handleCellAction(playerIndex, cellIndex) {
   }
 }
 
+/**
+ * Maneja el evento cuando un jugador cae en la casilla "examen-roberto".
+ * @param {number} playerIndex - El índice del jugador.
+ */
+function handleExamenRobertoEvent(playerIndex) {
+  const amount = Math.random() < 0.5 ? -200 : -400;
+  playerBalances[playerIndex] += amount;
+
+  const message = amount === -200 ? '¡Has perdido 200€!' : '¡Has perdido 400€ y Roberto se ríe de ti!';
+  showExamenRobertoResult(playerIndex, message);
+}
+
+/**
+ * Muestra el resultado del evento "examen-roberto".
+ * @param {number} playerIndex - El índice del jugador.
+ * @param {string} message - El mensaje a mostrar.
+ */
+function showExamenRobertoResult(playerIndex, message) {
+  const examenPromptContainer = document.createElement('div');
+  examenPromptContainer.classList.add('examen-prompt');
+  examenPromptContainer.innerHTML = `
+    <h2>${message}</h2>
+    <button onclick="closeExamenPrompt()">Aceptar</button>
+  `;
+  document.body.appendChild(examenPromptContainer);
+  updatePlayerList();
+}
+
+/**
+ * Cierra el mensaje del evento "examen-roberto".
+ */
+function closeExamenPrompt() {
+  const examenPromptContainer = document.querySelector('.examen-prompt');
+  examenPromptContainer.remove();
+
+  // Pasar al siguiente jugador
+  currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+  playTurn();
+}
+
+/**
+ * Maneja el evento cuando un jugador cae en la casilla "soborno-javi".
+ * @param {number} playerIndex - El índice del jugador.
+ */
+function handleSobornoJaviEvent(playerIndex) {
+  const sobornoPromptContainer = document.createElement('div');
+  sobornoPromptContainer.classList.add('soborno-prompt');
+  sobornoPromptContainer.innerHTML = `
+    <h2>${playerNames[playerIndex]}, has encontrado a Javi</h2>
+    <p>¿Qué quieres hacer?</p>
+    <button onclick="saludarJavi(${playerIndex})">Saludar</button>
+    <button onclick="sobornarJavi(${playerIndex})">Sobornar</button>
+  `;
+  document.body.appendChild(sobornoPromptContainer);
+}
+
+/**
+ * Maneja el evento cuando un jugador elige saludar a Javi.
+ * @param {number} playerIndex - El índice del jugador.
+ */
+function saludarJavi(playerIndex) {
+  const outcome = Math.random() < 0.5 ? 'gain' : 'lose';
+  const amount = outcome === 'gain' ? 100 : -50;
+  playerBalances[playerIndex] += amount;
+
+  const message = outcome === 'gain' ? '¡Javi te ha dado 100€!' : '¡Javi te ha quitado 50€!';
+  showSobornoResult(playerIndex, message);
+}
+
+/**
+ * Maneja el evento cuando un jugador elige sobornar a Javi.
+ * @param {number} playerIndex - El índice del jugador.
+ */
+function sobornarJavi(playerIndex) {
+  const outcome = Math.random() < 0.5 ? 'gain' : 'lose';
+  const amount = outcome === 'gain' ? 300 : -200;
+  playerBalances[playerIndex] += amount;
+
+  const message = outcome === 'gain' ? '¡Has ganado 300€!' : '¡Has perdido 200€!';
+  showSobornoResult(playerIndex, message);
+}
+
+/**
+ * Muestra el resultado del evento "soborno-javi".
+ * @param {number} playerIndex - El índice del jugador.
+ * @param {string} message - El mensaje a mostrar.
+ */
+function showSobornoResult(playerIndex, message) {
+  const sobornoPromptContainer = document.querySelector('.soborno-prompt');
+  sobornoPromptContainer.innerHTML = `
+    <h2>${message}</h2>
+    <button onclick="closeSobornoPrompt()">Aceptar</button>
+  `;
+  updatePlayerList();
+}
+
+/**
+ * Cierra el mensaje del evento "soborno-javi".
+ */
+function closeSobornoPrompt() {
+  const sobornoPromptContainer = document.querySelector('.soborno-prompt');
+  sobornoPromptContainer.remove();
+
+  // Pasar al siguiente jugador
+  currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
+  playTurn();
+}
+
+/**
+ * Maneja el evento cuando un jugador cae en la casilla "PARKING".
+ * @param {number} playerIndex - El índice del jugador.
+ */
 function handleParkingEvent(playerIndex) {
   const event = Math.random() < 0.5 ? 'found' : 'stolen';
   const amount = event === 'found' ? 200 : -100;
@@ -510,6 +682,9 @@ function handleParkingEvent(playerIndex) {
   updatePlayerList();
 }
 
+/**
+ * Cierra el mensaje del evento "PARKING".
+ */
 function closeParkingPrompt() {
   const parkingPromptContainer = document.querySelector('.parking-prompt');
   parkingPromptContainer.remove();
@@ -519,6 +694,10 @@ function closeParkingPrompt() {
   playTurn();
 }
 
+/**
+ * Envía al jugador a la cárcel.
+ * @param {number} playerIndex - El índice del jugador.
+ */
 function goToPrison(playerIndex) {
   playerBalances[playerIndex] -= 100; // Pagar multa de 100€
   updatePlayerList();
@@ -549,11 +728,20 @@ function goToPrison(playerIndex) {
   }, 5000);
 }
 
+/**
+ * Cierra el mensaje del evento "jail".
+ */
 function closeJailPrompt() {
   const jailPromptContainer = document.querySelector('.jail-prompt');
   jailPromptContainer.remove();
 }
 
+/**
+ * Muestra el mensaje de compra para una propiedad.
+ * @param {Object} property - El objeto de la propiedad.
+ * @param {number} playerIndex - El índice del jugador.
+ * @param {number} cellIndex - El índice de la casilla.
+ */
 function showPurchasePrompt(property, playerIndex, cellIndex) {
   const purchasePromptContainer = document.getElementById("purchase-prompt-container");
 
@@ -569,12 +757,18 @@ function showPurchasePrompt(property, playerIndex, cellIndex) {
   purchasePromptContainer.style.display = "block";
 }
 
+/**
+ * Cierra el mensaje de compra.
+ */
 function closePurchasePrompt() {
   const purchasePromptContainer = document.getElementById("purchase-prompt-container");
   purchasePromptContainer.style.display = "none";
   purchasePromptContainer.innerHTML = ""; // Limpia el contenido
 }
 
+/**
+ * Omite la compra de la propiedad.
+ */
 function skipPurchase() {
   closePurchasePrompt();
 
@@ -583,12 +777,17 @@ function skipPurchase() {
   playTurn();
 }
 
+/**
+ * Solicita al jugador que compre una propiedad.
+ * @param {number} playerIndex - El índice del jugador.
+ * @param {number} cellIndex - El índice de la casilla.
+ */
 function promptPropertyPurchase(playerIndex, cellIndex) {
   const cell = cells[cellIndex];
   const propertyPrice = (cellIndex + 1) * 50;
   const playerBalance = playerBalances[playerIndex];
 
-  // Check if the property is already owned by another player
+  // Verificar si la propiedad ya está poseída por otro jugador
   if (propertiesOwned[cellIndex] !== undefined) {
     // Pasar al siguiente jugador si la propiedad ya está comprada
     currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.length;
@@ -603,6 +802,10 @@ function promptPropertyPurchase(playerIndex, cellIndex) {
   }
 }
 
+/**
+ * Muestra el mensaje de fondos insuficientes.
+ * @param {number} playerIndex - El índice del jugador.
+ */
 function showInsufficientFundsMessage(playerIndex) {
   const purchasePromptContainer = document.getElementById("purchase-prompt-container");
 
@@ -616,6 +819,12 @@ function showInsufficientFundsMessage(playerIndex) {
   purchasePromptContainer.style.display = "block";
 }
 
+/**
+ * Compra la propiedad para el jugador.
+ * @param {number} playerIndex - El índice del jugador.
+ * @param {number} cellIndex - El índice de la casilla.
+ * @param {number} propertyPrice - El precio de la propiedad.
+ */
 function buyProperty(playerIndex, cellIndex, propertyPrice) {
   playerBalances[playerIndex] -= propertyPrice;
   propertiesOwned[cellIndex] = playerIndex;
@@ -637,6 +846,11 @@ function buyProperty(playerIndex, cellIndex, propertyPrice) {
   playTurn();
 }
 
+/**
+ * Paga el alquiler al propietario de la propiedad.
+ * @param {number} playerIndex - El índice del jugador.
+ * @param {number} cellIndex - El índice de la casilla.
+ */
 function payRent(playerIndex, cellIndex) {
   const ownerIndex = propertiesOwned[cellIndex];
   const rent = (cellIndex + 1) * 50 * 0.1; // 10% del valor de la propiedad
@@ -652,6 +866,12 @@ function payRent(playerIndex, cellIndex) {
   rentPromptContainer.style.display = "block";
 }
 
+/**
+ * Paga el monto del alquiler al propietario de la propiedad.
+ * @param {number} playerIndex - El índice del jugador.
+ * @param {number} ownerIndex - El índice del propietario de la propiedad.
+ * @param {number} rent - El monto del alquiler.
+ */
 function payRentAmount(playerIndex, ownerIndex, rent) {
   playerBalances[playerIndex] -= rent;
   playerBalances[ownerIndex] += rent;
@@ -668,6 +888,10 @@ function payRentAmount(playerIndex, ownerIndex, rent) {
   playTurn();
 }
 
+/**
+ * Verifica si el jugador está en bancarrota.
+ * @param {number} playerIndex - El índice del jugador.
+ */
 function checkBankruptcy(playerIndex) {
   if (playerBalances[playerIndex] <= 0) {
     alert(`${playerNames[playerIndex]} se ha quedado sin dinero y está en bancarrota.`);
@@ -685,6 +909,9 @@ function checkBankruptcy(playerIndex) {
   }
 }
 
+/**
+ * Verifica si el juego ha terminado.
+ */
 function checkGameEnd() {
   if (playerNames.length === 1) {
     alert(`¡${playerNames[0]} es el ganador!`);
@@ -693,6 +920,9 @@ function checkGameEnd() {
   }
 }
 
+/**
+ * Actualiza la visualización de la lista de jugadores.
+ */
 function updatePlayerList() {
   const playerListDiv = document.querySelector('.player-list');
   playerListDiv.innerHTML = `<h2>Jugadores</h2>`;
